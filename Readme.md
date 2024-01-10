@@ -14,7 +14,7 @@ This repo initializes an RStudio project and `renv` package management system fo
 
 6.  Clone the [course environment repository](https://github.com/advanced-empirical-finance/course_environment_AEF) by opening RStudio, clicking `File/New Project,` and selecting `Version Control`. Then, click `Git` and provide the repository address <https://github.com/advanced-empirical-finance/course_environment_AEF.git>. RStudio will then automatically open the project in the new environment.
 
-7.  In the console of RStudio, install the `reticulate` R package and use the package to install Python
+7.  In the console of RStudio, install the `reticulate` R package. Proceed with `Y` when asked if you want to install the packages. Use the package to install Python
 
              install.packages("reticulate")                               `
              reticulate::install_python(version = "3.10.11", force = TRUE)
