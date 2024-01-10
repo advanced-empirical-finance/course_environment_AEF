@@ -30,11 +30,27 @@ This repo initializes an RStudio project and `renv` package management system fo
 
          renv::restore()
 
-Now, you are ready to execute all code found in this repository and every code chunk from this course. Whenever you install a new package (e.g., `tidymodel`), do as you would typically do (`install.packages("tidymodels")`) and update your package management system at the end of the session by running `renv::snapshot()`. The same applies if you update or install Python packages (you can do this from the Rstudio Terminal). Should you share the `renv.lock` and `requirements.txt` files with your peers, they must run `renv::init()` to replicate your exact package environment.
+Now, you are ready to execute all code found in this repository and every code chunk from this course, including every chapter of the [tidy-finance.org platform](www.tidy-finance.org). Whenever you install a new package (e.g., `tidymodels`), do as you would typically do 
+
+    `install.packages("tidymodels")` 
+    
+At the end of the session, you update your package management system ion by running 
+
+    renv::snapshot()
+    
+The same applies if you update or install Python packages (you can do this from the Rstudio Terminal), for example by calling
+
+    pip install yfinance
+
+To collaborate with peers, you can share the `renv.lock` and `requirements.txt` files. They only have to run 
+
+    renv::init()
+  
+to replicate your exact package environment.
 
 ## Further content of the repository
 
--   You find an (empty) folder, `data`. All data required to solve the exercise and assignments in this course is available in the files `tidy_finance_r.sqlite` and `tidy_finance_python.sqlite` on Absalon. You can download the files and include them in the data folder. That way, we have an identical folder structure, so you can run every code chunk from my slides without changing paths. It is **not** allowed to share the `.sqlite` files publicly; thus, neither you nor I are allowed to push the file to a public repo.
+-   You find a (currently empty) folder, `data`. All data required to solve the exercise and assignments in this course is available in the files `tidy_finance_r.sqlite` and `tidy_finance_python.sqlite` on Absalon. You can download the files and include them in the data folder. That way, we have an identical folder structure, so you can run every code chunk from my slides without changing paths. It is **not** allowed to share the `.sqlite` files publicly; thus, neither you nor I are allowed to push the file to a public repo.
 -   The folder `mandatory_assignments` contains the files `MA_R_template.qmd` and `MA_python_template.qmd`, which you can use to understand the inner workings of `quarto` files. The file automatically generates .pdf documents, which comply with the formatting standards of this course.
 -   The folder `lecture_slides` contains all lecture slides and the corresponding `.qmd` files I used to render the slides.
 
