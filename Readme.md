@@ -4,24 +4,31 @@ This repo initializes an RStudio project and `renv` package management system fo
 
 ## How to use this repository
 
-1.  Install [R 4.3.2](https://cran.r-project.org/) and [RStudio Desktop.](https://posit.co/download/rstudio-desktop/)
+1.  Install [R (Version 4.3.2)](https://cran.r-project.org/) and [RStudio Desktop.](https://posit.co/download/rstudio-desktop/)
 
 2.  Install the newest version of [Quarto](https://quarto.org/docs/download/).
 
-3.  Open the terminal in RStudio. The terminal is in the tab next to the R console pane in RStudio. Install/Update `TinyTeX`, a lightweight, cross-platform, portable, and easy-to-maintain LaTeX distribution by typing the command `quarto install tool tinytex`.
+3.  Open the terminal in RStudio. The terminal is in the tab next to the R console pane in RStudio. Install/Update `TinyTeX`, a lightweight, cross-platform, portable, and easy-to-maintain LaTeX distribution by typing the command
+  
+          quarto install tool tinytex
 
-4.  Clone the [course environment repository](https://github.com/advanced-empirical-finance/course_environment_AEF) by opening RStudio, clicking `File/New Project,` and selecting `Version Control`. Then, click `Git` and provide the repository address <https://github.com/advanced-empirical-finance/course_environment_AEF.git>. RStudio will then automatically open the project in the new environment.
+6.  Clone the [course environment repository](https://github.com/advanced-empirical-finance/course_environment_AEF) by opening RStudio, clicking `File/New Project,` and selecting `Version Control`. Then, click `Git` and provide the repository address <https://github.com/advanced-empirical-finance/course_environment_AEF.git>. RStudio will then automatically open the project in the new environment.
 
-5.  In the console of RStudio, install the `reticulate` R package: `install.packages("reticulate")`.
+7.  In the console of RStudio, install the `reticulate` R package and use the package to install Python
 
-6.  Use `reticulate` to install Python: `reticulate::install_python(version = "3.10.11", force = TRUE)`.
+             install.packages("reticulate")                               `
+             reticulate::install_python(version = "3.10.11", force = TRUE)
 
-7.  Tell `renv` to use Python: `renv::use_python("PATH")`.
+8.  Tell `renv` to use Python:
+  
+        renv::use_python("PATH")
 
     -   `"PATH"` on Mac: `"~/.pyenv/versions/3.10.11/bin/python"`.
     -   `"PATH"` on Windows: `"C:/Users/<User>/AppData/Local/r-reticulate/ r-reticulate/pyenv/pyenv-win/versions/3.10.11/python.exe"` where `<User>` is your user name.
 
-8.  Tell `renv` to install all other required packages: `renv::restore()`.
+11.  Tell `renv` to install all other required packages:
+
+         renv::restore()
 
 Now, you are ready to execute all code found in this repository and every code chunk from this course. Whenever you install a new package (e.g., `tidymodel`), do as you would typically do (`install.packages("tidymodels")`) and update your package management system at the end of the session by running `renv::snapshot()`. The same applies if you update or install Python packages (you can do this from the Rstudio Terminal). Should you share the `renv.lock` and `requirements.txt` files with your peers, they must run `renv::init()` to replicate your exact package environment.
 
