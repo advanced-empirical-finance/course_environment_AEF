@@ -1,37 +1,40 @@
 ---
-title: "Advanced Empirical Finance"
+title: "Advanced Empirical Finance: Topics and Data Science"
 author: "Stefan Voigt"
 institute: "University of Copenhagen and Danish Finance Institute"
-date: "Spring 2024"
+date: today
+date-format: "[Spring] YYYY"
 format: beamer
 pdf-engine: lualatex
 
 theme: metropolis
 fontsize: 10pt
-mainfont: "Fira Sans"
-monofont: "Source Code Pro"
+mainfont: Fira Sans
+monofont: Source Code Pro
+monofontoptions: 
+  - Scale=0.9
 mathfont: firamath
 
 knitr:
   opts_chunk: 
-    size : "tiny"
-    fig.width : 8
-    fig.height : 4
-    fig.align : "center"
-    out.width : "60%"
+    size: "tiny"
+    fig.width: 8
+    fig.height: 4
+    fig.align: "center"
+    out.width: "60%"
     R.options:
       tibble.print_max : 4
       tibble.print_min : 4
-      formatR.indent : 2
+      formatR.indent: 2
       digits : 3
-      crayon.enabled : FALSE
+      crayon.enabled: FALSE
 
 execute:
-  echo : TRUE
-  cache : FALSE
-  eval : TRUE
-  message : FALSE
-  warning : FALSE
+  echo: TRUE
+  cache: FALSE
+  eval: TRUE
+  message: FALSE
+  warning: FALSE
 
 header-includes: |-
   \metroset{progressbar=frametitle} 
@@ -50,6 +53,12 @@ header-includes: |-
 ```{r}
 #| include: false
 source("pre_session_script.R")
+```
+
+```{python}
+#| include: false
+from plotnine import theme_set, theme, theme_bw
+theme_set(theme_bw() + theme(legend_position="bottom"))
 ```
 
 # Asset prices and returns
@@ -107,12 +116,12 @@ c(sum((returns - mean(returns))^2)/(length(returns) - 1), var(returns)) # (daily
 - Estimate the sample variance-covariance matrix $\hat\Sigma$
 
 ```{r}
-prices <- tq_get(c("META", "AAPL", "MSFT"), get = "stock.prices", from = "2000-01-01")
-
+prices <- tq_get(c("META", "AAPL", "MSFT"), from = "2000-01-01")
 price_matrix <- prices |> 
-    group_by(symbol) |> # Net returns per symbol
-    transmute(date, return = (adjusted - lag(adjusted)) / lag(adjusted)) |>  
-  pivot_wider(names_from = symbol, values_from = return) |> drop_na() |> select(-date) 
+  group_by(symbol) |> # Net returns per symbol
+  transmute(date, return = (adjusted - lag(adjusted)) / lag(adjusted)) |>  
+  pivot_wider(names_from = symbol, values_from = return) |> 
+  drop_na() |> select(-date) 
 (sigma <- price_matrix |> cov())
 ```
 
@@ -130,7 +139,7 @@ bind_rows(100 * sqrt(250 * diag(sigma)), # Annualized volatility (in percent),
 - Portfolio returns $r^{pf}_{t} = \omega'r_t$
 - Common properties of utility functions (concave) 
 $$U'(r_t) > 0 \text{ and } U(E(r_t)) > E(U(r_t))$$ 
-- Preference for higher expected return and lower volatility $\sigma^{pf} \left(=\sqrt{\text{Var}(r^{pf}_t})\right)$
+- Preference for higher expected return and lower volatility $\sigma^{pf} =\sqrt{\text{Var}\left(r^{pf}_t\right)}$
 $$\begin{aligned}
 E(r^{pf}_{t}) = \omega'\mu \qquad (\sigma^{pf})^2 &= E\left(\omega'(r_t - \mu)(r_t- \mu)'\omega\right) \\ &= E\left(tr\left(\omega'(r_t - \mu)(r_t- \mu)'\omega\right)\right)
 \\ &= tr\left(\omega'E\left((r_t - \mu)(r_t- \mu)\right)'\omega\right) = \omega'\Sigma \omega
@@ -207,7 +216,7 @@ $$\omega_\text{eff}\left(\bar\mu\right) = \omega_\text{mvp} + \frac{\tilde\lambd
 $$\omega^* = c\omega_\text{eff}(\bar\mu) + (1-c)\omega_\text{eff}(\tilde\mu) = \omega_\text{mvp} + \frac{\lambda^*}{2}\left(\Sigma^{-1}\mu -\frac{D}{C}\Sigma^{-1}\iota \right)$$ with $\lambda^* = 2\frac{c\bar\mu + (1-c)\tilde\mu - D/C}{E-D^2/C}$.
 - As a result, any portfolio of two efficient portfolios is also efficient
 
-## The efficient frontier with R (exercise)
+## The efficient frontier (coding exercise)
 - Download historical price data for *all* stocks that are part of the Dow Jones index and obtain estimates $\hat{\mu}$ and $\hat{\Sigma}$.
 - Compute $\omega_\text{mvp}$ and arbitrary $\omega_\text{eff}(\bar{\mu})$
 - Then, apply the two-fund theorem to characterize the *entire* efficient frontier
@@ -268,21 +277,32 @@ Note that $r_t^{pf} = \omega_t'r_{t+1}$ where $\omega_t$ denotes the weights bas
 - Portfolio volatility $\sqrt{\hat\sigma^2\left(r^{pf}\right)}$
 - Later we will also consider transaction costs which depend on rebalancing from $\omega_{t-1}$ to $\omega_{t}$
 
-## Rolling windows in R
+## Rolling windows in R and Python
 
 - You will need `for` loops to mimic sliding through time
-- `for` loops provide a way to tell R, “Do *this* for every value of *that*.” In R syntax, this looks like this:
+- `for` loops provide a way to tell, “Do *this* for every value of *that*.” In R and Python syntax, this looks like this:
 
+:::: {.columns}
+::: {.column width="45%"}
 ```{r}
+# R
 for (value in c("My", "first", "for", "loop")) {
   print(value)
 }
 ```
+:::
+::: {.column width="45%"}
+```{python}
+# Python
+for value in ["My", "first", "for", "loop"]:
+    print(value)
+```
+:::
+::::
 
-- For more details on how to use loops in R, [Chapter 11 of this book](https://rstudio-education.github.io/hopr/loops.html) is a great tool
 - \textcolor{red}{Task: Develop pseudo-code for portfolio backtesting}
 
-## Functions in R 
+## Functions in R and Python
 
 - Writing a function has three big advantages over using copy-and-paste:
 
@@ -292,6 +312,24 @@ for (value in c("My", "first", "for", "loop")) {
 
 - Keep in mind: functions are for computers but also *for humans* to make clear code 
 - Use names that explain what the function is doing and make use of comments `#` for readers (including future-you)
+
+:::: {.columns}
+::: {.column width="45%"}
+```{r}
+# R
+compute_sum <- function(x, y){
+  return(x+y)
+}
+```
+:::
+::: {.column width="45%"}
+```{python}
+# Python
+def compute_sum(x, y):
+    return x + y
+```
+:::
+::::
 
 ## 3 key steps to creating a new function
 
@@ -319,7 +357,7 @@ compute_efficient_portfolio(sigma, colMeans(price_matrix), mu_bar = 0.25 / 250)
 ## Parameter uncertainty
 
 - Consider a quadratic utility function with risk aversion $\gamma$ and certainty equivalent $$CE(\omega) = \omega'\mu - \frac{\gamma}{2} \omega'\Sigma \omega $$ 
-- Maximum expected utility portfolio (under the constraint $\iota'\omega = 1$) is equivalent to the framework above (minimize volatility for a given level of return $\bar\mu$) (**the proof is an exercise**: show that there is a bijective mapping from $\gamma$ to $\bar\mu$)
+- Maximum expected utility portfolio (under the constraint $\iota'\omega = 1$) is equivalent to the framework above (minimize volatility for a given level of return $\bar\mu$) (the proof is an exercise: show that there is a bijective mapping from $\gamma$ to $\bar\mu$)
 - Optimal investment: efficient portfolio $\omega_\gamma(\mu, \Sigma)$
 - Econometrician can only invest in $\omega_\gamma(\hat\mu, \hat\Sigma)$
 - As a result: Inefficient wealth allocation
@@ -400,13 +438,13 @@ $$E(r_i) - r_f = \underbrace{\frac{Cov(r_i, r_m)}{\text{Var}(r_m)}}_{\beta_i} E(
 
 ### How to get the data
 
-- Note that in *Tidy Finance with R*, we explain how to get CRSP data from the WRDS interface. This does not work on the KU campus!
+- Note that in the textbook, we explain how to get CRSP data from the WRDS interface. This does not work on the KU campus!
 - Consult Absalon for a detailed description of the CRSP sample. As KU students you have direct access to the data. \textcolor{red}{Familiarize yourself with CRSP.}
 
 ## Composition of the CRSP sample (Chapter 7, Bali, Murray, Engle)
 
 - Familiarize yourself with the cleaning steps in the exercise on the CRSP sample
-- Monthly processed (!) data is available in `tidy_finance_r.sqlite` file in Absalon
+- Monthly processed (!) data is available in `tidy_finance_r.sqlite` and `tidy_finance_python.sqlite` file in Absalon
 - Only contains US stocks (`shrcd%in%c(10,11)`)
 - Variable `exchcd` determines listing exchanges, `siccd` lists industry
 
@@ -414,24 +452,43 @@ $$E(r_i) - r_f = \underbrace{\frac{Cov(r_i, r_m)}{\text{Var}(r_m)}}_{\beta_i} E(
 library(RSQLite)
 tidy_finance <- dbConnect(SQLite(), "../data/tidy_finance_r.sqlite", extended_types = TRUE) # Connect to sql
 crsp_monthly <- tbl(tidy_finance, "crsp_monthly") |> collect()
+```
 
-crsp_monthly |> count(exchange, date) |>
-  ggplot(aes(x = date, y = n, color = exchange)) + geom_line() +
-  labs(x = NULL, y = NULL, color = NULL, title = "Monthly number of securities by listing exchange")
+```{python}
+#| eval: false
+import pandas as pd
+import sqlite3
+
+tidy_finance_python = sqlite3.connect(
+  database="../data/tidy_finance_python.sqlite"
+)
+
+crsp_monthly = (pd.read_sql_query(
+  sql=("SELECT permno, month, industry, ret_excess " 
+       "FROM crsp_monthly"),
+  con=tidy_finance_python,
+  parse_dates={"month"})
+  .dropna()
+)
 ```
 
 ## Industry classification
 
-- We adjust the market capitalization values for inflation using the Consumer Price Index (CPI)
-- CPI data from the Bureau of Labor Statistics website. The data (All Urban Consumer series) are available at [www.bls.gov/cpi/data.htm](www.bls.gov/cpi/data.htm)
+- We adjust the market capitalization values for inflation using the [Consumer Price Index](www.bls.gov/cpi/data.htm) (CPI, All Urban Consumer series) from the Bureau of Labor Statistics website.
 
 ```{r}
+#| layout-ncol: 2
+
+crsp_monthly |> count(exchange, date) |>
+  ggplot(aes(x = date, y = n, color = exchange)) + geom_line() +
+  labs(x = NULL, y = NULL, color = NULL, title = "Monthly number of securities by listing exchange")
+
 crsp_monthly |>
-  left_join(tbl(tidy_finance, "cpi_monthly") |> collect(), by = "month") |> 
+  left_join(tbl(tidy_finance, "cpi_monthly") |> collect(), join_by(month)) |> 
   group_by(month, industry) |> 
   summarize(mktcap = sum(mktcap / cpi) / 1000000) |> ungroup() |> 
   ggplot(aes(x = month, y = mktcap, color = industry)) + geom_line() +
-  labs(x = NULL, y = NULL, title = "Market Cap by industry (in trillion USD)")
+  labs(x = NULL, y = NULL, color = NULL, title = "Market Cap by industry (in trillion USD)")
 ```
 
 ## Compute returns in the CRSP sample
@@ -452,7 +509,7 @@ raw_crsp_monthly |> # Process Raw file (sqlite contains processed data already)
   select(-c(dlret, dlstcd)) 
 ```
 
-- *Note*: The `tidy_finance_r.sqlite` data already contains the processed CRSP file with excess and raw returns. For the sake of simplicity, I removed the delisting information (consult the exercises for more details)
+- *Note*: The `tidy_finance_*.sqlite` data already contains the processed CRSP file with excess and raw returns. For the sake of simplicity, I removed the delisting information (consult the exercises for more details)
 
 ## Risk-free rate
 
@@ -538,9 +595,58 @@ apple_monthly |> ggplot(aes(x = mkt_excess, y = ret_excess)) + geom_point() +
 - Rolling-window regressions are straightforward from a methodological perspective but tricky to implement  
 - Exercises: conduct rolling window regression of beta for the entire CRSP universe
 
+:::: {.columns}
+::: {.column width="45%"}
+```{r}
+#| eval: false
+roll_capm_estimation <- function(data, months, min_obs) {
+  data <- data |>
+    arrange(month)
+
+  betas <- slide_period_vec(
+    .x = data,
+    .i = data$month,
+    .period = "month",
+    .f = ~ estimate_capm(., min_obs),
+    .before = months - 1,
+    .complete = FALSE
+  )
+
+  return(tibble(
+    month = unique(data$month),
+    beta = betas
+  ))
+}
+```
+:::
+::: {.column width="45%"}
+```{python}
+#| eval: false
+def roll_capm_estimation(data, window_size, min_obs):
+  
+    data = data.sort_values("month")
+
+    result = (RollingOLS.from_formula(
+      formula="ret_excess ~ mkt_excess",
+      data=data,
+      window=window_size,
+      min_nobs=min_obs
+      )
+      .fit()
+      .params["mkt_excess"]
+    )
+    
+    result.index = data.index
+    
+    return result
+```
+::: 
+::::
+
+## CAPM beta in the industry-cross section
 ```{r}
 beta <- tbl(tidy_finance, "beta") |> collect() |> 
-  inner_join(crsp_monthly, by = c("month", "permno")) |> drop_na(beta_monthly)
+  inner_join(crsp_monthly, join_by(month, permno)) |> drop_na(beta_monthly)
 beta  |> group_by(industry, permno) |> summarise(beta = mean(beta_monthly)) |> 
    ggplot(aes(x = reorder(industry, beta, FUN = median), y = beta)) +
   geom_boxplot() + coord_flip() +
@@ -557,7 +663,7 @@ beta  |> group_by(industry, permno) |> summarise(beta = mean(beta_monthly)) |>
 1. Calculate the average return $r_{p,t}$ within each portfolio for each period $t$
 1. Examine variation in these average values of $r_{p,t}$  across the different
 portfolios
-
+  
 ```{r}
 beta_portfolios <- beta |> # A stylized example (note time convention in exercise!)
   group_by(month) |>
@@ -565,7 +671,7 @@ beta_portfolios <- beta |> # A stylized example (note time convention in exercis
          portfolio = case_when(beta_monthly <= breakpoint ~ "low",
                                beta_monthly > breakpoint ~ "high")) |>
   group_by(month, portfolio) |>
-  summarize(ret = weighted.mean(ret_excess, mktcap_lag), .groups = "drop") # value-weighted performance
+  summarize(ret = weighted.mean(ret_excess, mktcap_lag), .groups = "drop")
 
 beta_portfolios |> # Positive alpha?
   pivot_wider(names_from = portfolio, values_from = ret) |> 
