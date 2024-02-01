@@ -430,9 +430,10 @@ p <- prices |> ggplot() + aes(x = date, y = volume_usd, color = symbol) +
   geom_point(size = 0.2) + geom_line(linetype = "dotted")
 
 library(scales) # for scale labeling
-p + labs(x = "Date", y ="Volume (USD)", title = "Daily volume") +
+p + labs(x = "Date", y ="Volume (USD)", title = "Daily volume", color = NULL) +
   facet_wrap(~symbol, scales = "free_x") + theme_tq() +
-  scale_y_continuous(labels = dollar)
+  scale_y_continuous(labels = scales::unit_format(unit = "M", 
+                                                  prefix = "$"))
 
 ```
 

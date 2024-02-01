@@ -31,7 +31,6 @@ knitr:
 
 execute:
   echo: TRUE
-  cache: FALSE
   eval: TRUE
   message: FALSE
   warning: FALSE
