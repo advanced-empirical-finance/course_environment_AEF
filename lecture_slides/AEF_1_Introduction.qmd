@@ -277,11 +277,7 @@ renv::restore() # fetch all R and Python packages required for this courses
 
 ## Ready for a first case study in R?
 
-- Start by opening your project or getting the working directory right
-```{r}
-#| eval: false
-setwd("path_to_your_course_folder")
-```
+- Start by opening your RStudio project
 - load the package `tidyverse`
 - Import data: `read_csv()`, `read_txt()`, .., or download with `tidyquant`
 ```{r}
