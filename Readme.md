@@ -32,7 +32,7 @@ This repo initializes an RStudio project and `renv` package management system fo
 
 Now, you are ready to execute all code found in this repository and every code chunk from this course, including every chapter of the [tidy-finance.org platform](www.tidy-finance.org). Whenever you install a new package (e.g., `tidymodels`), do as you would typically do 
 
-    `install.packages("tidymodels")` 
+    install.packages("tidymodels") 
     
 At the end of the session, you update your package management system ion by running 
 
