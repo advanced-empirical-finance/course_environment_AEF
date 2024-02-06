@@ -17,7 +17,7 @@ This repo initializes an RStudio project and `renv` package management system fo
 
 7.  In the console of RStudio, install the `reticulate` R package. Proceed with `Y` when asked if you want to install the packages. Use the package to install Python
 
-             install.packages("reticulate")                               `
+             install.packages("reticulate")                               
              reticulate::install_python(version = "3.10.11", force = TRUE)
 
 8.  Tell `renv` to use Python:
