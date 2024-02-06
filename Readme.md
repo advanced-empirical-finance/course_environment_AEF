@@ -7,8 +7,9 @@ This repo initializes an RStudio project and `renv` package management system fo
 1.  Install [R (Version 4.3.2)](https://cran.r-project.org/) and [RStudio Desktop.](https://posit.co/download/rstudio-desktop/)
 
 2.  Install the newest version of [Quarto](https://quarto.org/docs/download/).
+3.  If you have not used Git (Version control) before, [follow these steps](https://happygitwithr.com/github-acct) to get ready to clone repositories from Github. You need to [register a GitHub account](https://happygitwithr.com/github-acct), [install Git](https://happygitwithr.com/install-git), and [configure Git](https://happygitwithr.com/hello-git) before proceeding.
 
-3.  Open the terminal in RStudio. The terminal is in the tab next to the R console pane in RStudio. Install/Update `TinyTeX`, a lightweight, cross-platform, portable, and easy-to-maintain LaTeX distribution by typing the command
+4.  Open the terminal in RStudio. The terminal is in the tab next to the R console pane in RStudio. Install/Update `TinyTeX`, a lightweight, cross-platform, portable, and easy-to-maintain LaTeX distribution by typing the command
   
           quarto install tool tinytex
 
