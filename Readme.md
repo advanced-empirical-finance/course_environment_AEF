@@ -25,7 +25,7 @@ This repo initializes an RStudio project and `renv` package management system fo
         renv::use_python("PATH")
 
     -   `"PATH"` on Mac: `"~/.pyenv/versions/3.10.11/bin/python"`.
-    -   `"PATH"` on Windows: `"C:/Users/<User>/AppData/Local/r-reticulate/ r-reticulate/pyenv/pyenv-win/versions/3.10.11/python.exe"` where `<User>` is your user name.
+    -   `"PATH"` on Windows: `"C:/Users/<User>/AppData/Local/r-reticulate/r-reticulate/pyenv/pyenv-win/versions/3.10.11/python.exe"` where `<User>` is your user name.
 
 11.  Tell `renv` to install all other required packages. Confirm with `Y` when asked if you want to proceed:
 
