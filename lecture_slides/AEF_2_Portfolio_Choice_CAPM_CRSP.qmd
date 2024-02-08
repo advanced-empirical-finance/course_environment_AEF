@@ -164,18 +164,32 @@ $$
 
 - Variance of the minimum variance portfolio return is $\omega_\text{mvp}'\Sigma \omega_\text{mvp} = \frac{1}{\iota'\Sigma^{-1}\iota}$
 
-## Computing the minimum variance portfolio with R
+## Computing the minimum variance portfolio
 - Suppose you know the variance-covariance matrix, e.g., 
 $$\Sigma = \begin{pmatrix} 3 & 2 \\ 2 & 4\end{pmatrix} \text{ with }\Sigma^{-1} = \frac{1}{8}\begin{pmatrix}4 & -2\\-2 &3\end{pmatrix}$$ 
 - Then you can compute the minimum variance portfolio weights as follows
 
 ```{r}
+# R
 Sigma <- matrix(c(3, 2, 2, 4), ncol = 2) # Define 2 x 2 matrix Sigma
 Sigma_inv <- solve(Sigma) # Invert the matrix
 w <- Sigma_inv %*% rep(1, 2) # %*% is matrix multiplication in R
 w <- w / sum(w)
 
 t(w) # t() transposes a vector/matrix
+```
+
+```{python}
+# Python
+import numpy as np
+
+Sigma = np.array([[3, 2],
+                  [2, 4]]) # Define 2 x 2 matrix Sigma
+Sigma_inv = np.linalg.inv(Sigma) # Invert the matrix
+w = Sigma_inv @ np.ones(2)
+
+w/w.sum()
+
 ```
 
 - The minimum variance portfolio weights are thus $\omega_\text{mvp} = \frac{1}{3}\begin{pmatrix}2 & 1\end{pmatrix}$
