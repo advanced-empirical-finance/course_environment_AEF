@@ -7,8 +7,9 @@ This repo initializes an RStudio project and `renv` package management system fo
 1.  Install [R (Version 4.3.2)](https://cran.r-project.org/) and [RStudio Desktop.](https://posit.co/download/rstudio-desktop/)
 
 2.  Install the newest version of [Quarto](https://quarto.org/docs/download/).
+3.  If you have not used Git (Version control) before, [follow these steps](https://happygitwithr.com/github-acct) to get ready to clone repositories from Github. You need to [register a GitHub account](https://happygitwithr.com/github-acct), [install Git](https://happygitwithr.com/install-git), and [configure Git](https://happygitwithr.com/hello-git) before proceeding.
 
-3.  Open the terminal in RStudio. The terminal is in the tab next to the R console pane in RStudio. Install/Update `TinyTeX`, a lightweight, cross-platform, portable, and easy-to-maintain LaTeX distribution by typing the command
+4.  Open the terminal in RStudio. The terminal is in the tab next to the R console pane in RStudio. Install/Update `TinyTeX`, a lightweight, cross-platform, portable, and easy-to-maintain LaTeX distribution by typing the command
   
           quarto install tool tinytex
 
@@ -16,7 +17,7 @@ This repo initializes an RStudio project and `renv` package management system fo
 
 7.  In the console of RStudio, install the `reticulate` R package. Proceed with `Y` when asked if you want to install the packages. Use the package to install Python
 
-             install.packages("reticulate")                               `
+             install.packages("reticulate")                               
              reticulate::install_python(version = "3.10.11", force = TRUE)
 
 8.  Tell `renv` to use Python:
@@ -24,7 +25,7 @@ This repo initializes an RStudio project and `renv` package management system fo
         renv::use_python("PATH")
 
     -   `"PATH"` on Mac: `"~/.pyenv/versions/3.10.11/bin/python"`.
-    -   `"PATH"` on Windows: `"C:/Users/<User>/AppData/Local/r-reticulate/ r-reticulate/pyenv/pyenv-win/versions/3.10.11/python.exe"` where `<User>` is your user name.
+    -   `"PATH"` on Windows: `"C:/Users/<User>/AppData/Local/r-reticulate/r-reticulate/pyenv/pyenv-win/versions/3.10.11/python.exe"` where `<User>` is your user name.
 
 11.  Tell `renv` to install all other required packages. Confirm with `Y` when asked if you want to proceed:
 
@@ -32,7 +33,7 @@ This repo initializes an RStudio project and `renv` package management system fo
 
 Now, you are ready to execute all code found in this repository and every code chunk from this course, including every chapter of the [tidy-finance.org platform](www.tidy-finance.org). Whenever you install a new package (e.g., `tidymodels`), do as you would typically do 
 
-    `install.packages("tidymodels")` 
+    install.packages("tidymodels") 
     
 At the end of the session, you update your package management system ion by running 
 
