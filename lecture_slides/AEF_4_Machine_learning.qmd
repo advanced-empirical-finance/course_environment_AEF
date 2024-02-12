@@ -1,0 +1,276 @@
+---
+title: "Advanced Empirical Finance: Topics and Data Science"
+author: "Stefan Voigt"
+institute: "University of Copenhagen and Danish Finance Institute"
+date: today
+date-format: "[Spring] YYYY"
+format: beamer
+pdf-engine: lualatex
+
+theme: metropolis
+fontsize: 10pt
+mainfont: Fira Sans
+monofont: Source Code Pro
+monofontoptions: 
+  - Scale=0.9
+mathfont: firamath
+
+knitr:
+  opts_chunk: 
+    size: "tiny"
+    fig.width: 8
+    fig.height: 4
+    fig.align: "center"
+    out.width: "60%"
+    R.options:
+      tibble.print_max : 4
+      tibble.print_min : 4
+      formatR.indent: 2
+      digits : 3
+      crayon.enabled: FALSE
+
+execute:
+  echo: TRUE
+  cache: FALSE
+  eval: TRUE
+  message: FALSE
+  warning: FALSE
+
+header-includes: |-
+  \metroset{progressbar=frametitle} 
+  \usepackage{graphicx} 
+  \usepackage{booktabs} 
+  \usepackage{amsmath,amsfonts,amssymb} 
+  \usepackage{listings} 
+  \setbeamercolor{progress bar}{fg=red} 
+  \setbeamercolor{frametitle}{fg=black,bg=white} 
+  \setbeamercolor{background canvas}{bg=white} 
+  \usepackage{hyperref} 
+  \hypersetup{colorlinks=false}
+  \setbeamertemplate{itemize/enumerate body begin}{\footnotesize}
+---
+
+```{r}
+#| include: false
+source("pre_session_script.R")
+```
+
+```{python}
+#| include: false
+from plotnine import theme_set, theme, theme_bw
+theme_set(theme_bw() + theme(legend_position="bottom"))
+```
+
+# Machine learning
+
+## What is Machine learning?
+
+:::: {.columns}
+::: {.column width="80%"}
+
+*The definition of "machine learning" is inchoate and is often context specific. We use the term to describe **(i)** a diverse collection of high-dimensional models for statistical prediction, combined with **(ii)** so-called "regularization" methods for model selection and mitigation of overfit and **(iii)** efficient algorithms for searching among a vast number of potential model specifications. (Gu et al. 2020)*
+
+- (i) select between small simplistic and complex ML models 
+- (i) Focus on predictive accuracy
+- (ii) selecting from multiple models in-sample leads to overfitting and poor out-of-sample performance
+- (ii) "regularization" methods for model selection
+- (iii) challenge in terms of computational effort
+
+:::
+::: {.column width="20%"}
+
+![]("figures/black_automated_stock_market.png"){width="100%" fig-align="center"}
+
+:::
+::::
+
+## ML in Finance
+
+::: {layout-ncol=2}
+![]("figures/satellite_image_parking_lot.jpg")
+
+![]("figures/satellite_image_oil_tanks.jpg")
+:::
+
+## What makes ML in Finance special? 
+
+### Challenges (Israel, Kelly, Moskowitz, 2019)
+
+- Limited data (left-hand side limited by $T$)
+- Markets evolve and thus even lower effective sample size
+- By market efficiency: small signal-to-noise ratio (limited predictability)
+- Data potentially unstructured (company announcements)
+
+### Our aim
+
+- Exploit potential for improving risk premium measurement $E_t\left(r_{i, t+1}\right)$
+
+### But...
+
+- improved predictions are still only measurements
+- The measurements do not tell us about economic mechanisms or equilibria
+- Machine learning methods on their own do not identify fundamental associations among asset prices and conditioning variables
+
+## Overview: Empirical Asset Pricing via Machine Learning
+
+- Familiarize yourself with the paper "Empirical Asset Pricing via Machine
+Learning" by Gu et al. (2020)
+
+- comparative analysis of machine learning methods for the canonical problem
+of measuring asset risk premiums
+- "We demonstrate large economic gains to investors using *machine learning forecasts*, in some cases doubling the performance of leading regression-based strategies from the literature."
+
+## Machine learning roadmap
+
+1. Bias-Variance Trade-off
+1. Penalized Linear Regressions (Ridge and Lasso)
+1. Regression Trees and Random Forests
+1. Neural Networks
+1. Advanced case studies and applications
+
+### Your task: 
+
+- Return prediction for all CRSP-listed stocks 
+- Large set of macroeconomic predictors 
+- Hundreds of predictive firm and economic characteristics
+- You should study Gu et al. (2020) in depth!
+- **Exercises:** Prepare the dataset as explained in Section 2.1 of Gu et al. (2020)
+
+# Bias-Variance Trade-off
+
+## Unbiased, linear estimators 
+
+$$E_t\left(r_{i, t+1}\right) = g^\star(x_{i, t}) \overset{??}{=} \beta'x_{i,t} $$
+
+- Machine learning prescribes a vast collection of high-dimensional models that attempt to predict future quantities of interest while imposing regularization
+- We know: OLS is the best linear unbiased estimator (BLUE)
+- "Best" = the lowest variance estimator among all other *unbiased linear* estimators
+- Requiring the estimator to be *linear* is binding since *nonlinear* estimators exist (e.g., neural networks or regression trees)
+- Likewise, *unbiased* is crucial since *biased* estimators do exist
+
+### Biased estimators? 
+
+- *Shrinkage* methods: the variance of the OLS estimator can be high as OLS coefficients are unregulated
+- If judged by Mean Squared Error (MSE), biased estimators could be more attractive if they produce substantially smaller variance than OLS
+
+## Shortcomings of OLS
+
+- Let $\beta$ denote the true regression coefficient and let $\hat\beta = \left(X'X\right)^{-1}X'y$, where $X$ is a $(T \times N)$ matrix of explanatory variables
+- Then, the variance of the (unbiased) OLS estimate $\hat\beta$ is given by 
+$$\begin{aligned}
+Var\left(\hat\beta\right) &= E\left(\left(\hat\beta-\beta\right)\left(\hat\beta - \beta\right)'\right)\\
+&=E\left((X'X)^{-1}X'\varepsilon\varepsilon'X(X'X)^{-1}\right)\\
+&=\sigma_\varepsilon^2 E\left((X'X)^{-1}\right)
+\end{aligned}$$
+where $\varepsilon$ is the vector of residuals and $\sigma_\varepsilon^2$ is the variance of the error term
+- When the predictors are highly correlated, the term $(X'X)^{-1}$ quickly explodes
+- Even worse: the OLS solution is not unique if $X$ is not of full rank
+
+
+### OLS in a prediction context
+
+1. restrictive
+1. may provide poor predictions, may be subject to *over-fitting*
+1. does not penalize for model complexity and could be difficult to interpret
+
+
+## The Bias-Variance Trade-off
+
+- Assume the model
+$$y = f(x) + \varepsilon, \quad \varepsilon \sim (0, \sigma_\varepsilon^2)$$
+- $\beta^\text{ols}$ has a host of well-known properties (Gauss-Markov)
+- But: Can we choose $\hat f(x)$ to fit future observations well?
+- MSE depends on the model as follows: $$\begin{aligned}
+E(\hat{\varepsilon}^2)&=E((y-\hat{f}(\textbf{x}))^2)=E((f(\textbf{x})+\varepsilon-\hat{f}(\textbf{x}))^2)\\
+&= \underbrace{E((f(\textbf{x})-\hat{f}(\textbf{x}))^2)}_{\text{total quadratic error}}+\underbrace{E(\varepsilon^2)}_{\text{irreducible error}} \\
+&= E\left(\hat{f}(\textbf{x})^2\right)+E\left(f(\textbf{x})^2\right)-2E\left(f(\textbf{x})\hat{f}(\textbf{x})\right)+\sigma_\varepsilon^2\\
+&=E\left(\hat{f}(\textbf{x})^2\right)+f(\textbf{x})^2-2f(\textbf{x})E\left(\hat{f}(\textbf{x})\right)+\sigma_\varepsilon^2\\
+&=\underbrace{\text{Var}\left(\hat{f}(\textbf{x})\right)}_{\text{variance of model}}+ \underbrace{E\left((f(\textbf{x})-\hat{f}(\textbf{x}))\right)^2}_{\text{squared bias}} +\sigma_\varepsilon^2 
+\end{aligned}$$
+- A biased estimator with small variance may have a lower MSE than an unbiased estimator
+
+## Over-fitting example 
+
+- 100 monthly manufacturing industry excess returns
+- Estimate a polynomial regression $$r_{t} = \alpha + \sum\limits_{p=1}^P \beta_pt^p $$ where $t$ is a time index, ranging from $1$ to $60$
+- Evaluate the performance in-sample and out-of-sample for $P = 1, 2, 3, 5, 20$
+
+```{r}
+#| echo: false
+
+library(RSQLite)
+tidy_finance <- dbConnect(SQLite(), "../data/tidy_finance_r.sqlite", extended_types = TRUE)
+
+data <- tbl(tidy_finance, "industries_ff_monthly") |>
+    select(month, returns = manuf) |>
+    collect() |>
+    mutate(time = as.integer(month)) |> 
+    tail(100)
+
+# Split the data into training and testing sets
+in_sample_size <- 60
+train_set <- data |> slice_head(n = in_sample_size)
+test_set <- data |> slice_tail(n = nrow(data) - in_sample_size)
+
+# Function to fit polynomial regression models
+fit_polynomial <- function(degree, data = train_set) {
+  formula <- as.formula(paste("returns ~ poly(time, ", degree, ", raw = TRUE)", sep = ""))
+  model <- lm(formula, data)
+  return(model)
+}
+
+results <- tibble(degree = c(1, 2, 3, 5, 20)) |> 
+  mutate(lm = map(degree, fit_polynomial),
+         lm_train = map(lm, predict, newdata = train_set, rankdeficient = "NA"),
+         lm_test = map(lm, predict, newdata = test_set, rankdeficient = "NA"),
+         lm_predictions = map2(lm_train, lm_test, 
+                               ~tibble(time = data$time,
+                                       returns =c(.x,.y)))) |>
+  unnest(lm_predictions) |> 
+  mutate(time = as.Date(time))
+
+# Plot the results
+ggplot(data |> mutate(time = as.Date(time)), 
+       aes(x = time, y = returns)) +
+  geom_point() +
+  scale_y_continuous(labels = scales::percent,
+                     limits = c(min(data$returns), max(data$returns))) +
+  geom_line(data = results, aes(color = as_factor(degree))) +
+  annotate("rect",
+           xmin = test_set |> pull(time) |> min() |> as.Date(),
+           xmax = test_set |> pull(time) |> max() |> as.Date(),
+           ymin = -Inf, ymax = Inf,
+           alpha = 0.5, fill = "grey70"
+  ) +
+  labs(x = NULL,
+       y = "Return",
+       color = NULL)
+```
+
+
+## Ridge Regression
+- Introduced by Hoerl and Kennard (1970a, 1970b)
+- Impose a penalty on the $L_2$ norm of the parameters $\hat\beta$ such that for $c\geq 0$ the estimation takes the form
+$$\beta^\text{ridge} = \arg\min_\beta \left(y - X\beta\right)'\left(y - X\beta\right)\text{ s.t. } \beta'\beta \leq c$$
+- Standard optimization procedure yields
+$$\beta^\text{ridge} = \left(X'X + \lambda I\right)^{-1}X'y$$
+- Hyper parameter $\lambda$ $(c)$ controls the amount of regularization
+- Note that $\beta^\text{ridge} = \beta^\text{ols}$ for $\lambda = 0$ $(c\rightarrow \infty)$ and $\beta^\text{ridge} \rightarrow 0$ for $\lambda\rightarrow \infty$ $(c\rightarrow 0)$
+- $\left(X'X + \lambda I\right)$ is non-singular even if $X'X$ is
+- *Note: * Usually, the intercept is not penalized (in practice: demean $y$)
+
+## Ridge Regression
+- Let $D := X'X$
+$$
+\begin{aligned}
+\beta^\text{ridge} &= \left(X'X + \lambda I\right)^{-1}X'y\\
+&= \left(D + \lambda I\right)^{-1}DD^{-1}X'y\\
+&= \left(D\left(I + \lambda D^{-1}\right)\right)^{-1}D\beta^\text{ols}\\
+&= \left(I + \lambda D^{-1}\right)^{-1}D^{-1}D\beta^\text{ols} = \left(I + \lambda D\right)^{-1}\beta^\text{ols}
+\end{aligned}
+$$
+- $\beta^\text{ridge}$ is biased because $E(\beta^\text{ridge} - \beta) \neq 0$ for $\lambda\neq0$
+- *But* at the same time (under homoscedastic error terms)
+$$\text{Var}(\beta^\text{ridge}) = \sigma_\varepsilon^2 \left(D + \lambda I\right)^{-1}X'X\left(D + \lambda I\right)^{-1}$$
+- You can show that $\text{Var}(\beta^\text{ridge}) \leq \text{Var}(\beta^\text{ols})$
+- Trade-off between bias and variance of the estimator!
