@@ -400,12 +400,12 @@ $$\begin{aligned}
 $$\Sigma\omega = \lambda_0\iota \Leftrightarrow \sum\limits_{j=1}^N\omega_j\Sigma_{i,j} = \lambda_0 \forall i$$
 - With $\tilde\Sigma$, assets which would imply negative weights are treated as if the variance is reduced by $2\lambda_i$ and covariance with asset $j$ is reduced by $\lambda_i + \lambda_j$
 
-## How imposing restrictions helps (in R) 
+## How imposing restrictions helps (in R and Python) 
 
 - Two commonly used approaches are naive diversification $\omega_\text{naive} = \frac{1}{N}\iota$ and short-sell constrained portfolios
 $$\omega_\text{no short} = \arg\max \omega'\mu - \frac{\gamma}{2}\omega'\Sigma\omega \quad \text{s.t. }\omega'\iota = 1 \text{ and } \omega_i \geq0 \quad\forall i$$
 - No closed-form solution exists to compute $\omega_\text{no short}$
-- Function `solve.QP` from package `quadprog` delivers the numerical solution to quadratic programming problems of the form 
+- R function `solve.QP` from package `quadprog` delivers the numerical solution to quadratic programming problems of the form 
 $$\min(-\mu' \omega + 1/2 \omega' \Sigma \omega) \text{ s.t. } A' \omega >= b_0$$
 - The function takes argument `meq` for the number of equality constraints
 - $A$ for $\omega_\text{no short}$ is $(N +1 \times N)$ and of the form (`meq` = 1)
@@ -431,7 +431,40 @@ names(solution) # Output is a list of relevant values. You can access list eleme
 solution$solution
 ```
 
+## How imposing restrictions helps (in Python)
 
+```{python}
+sigma = r.sigma
+N = sigma.shape[1]
+mu = r.price_matrix.mean()
+w_initial = np.ones(N)/N
+
+def objective_efficient(w):
+    return 2*0.5*w.T @ sigma @ w-(1+mu) @ w
+
+def gradient_efficient(w):
+    return 2*sigma @ w-(1+mu)
+
+def equality_constraint(w):
+    return np.sum(w)-1
+
+def jacobian_equality(w):
+    return np.ones_like(w)
+
+constraints = (
+  {"type": "eq", "fun": equality_constraint, "jac": jacobian_equality}
+)
+
+from scipy.optimize import minimize
+
+w_no_short_sale = minimize(
+  x0=w_initial, fun=objective_efficient, jac=gradient_efficient, 
+  constraints=constraints, bounds=((0, None), )*N, tol=1e-20,
+  options={"maxiter": 10000}, method="SLSQP"
+)
+
+w_no_short_sale["x"]
+```
 # Empirical evidence for the CAPM
 
 ## Main implication: Capital asset pricing model
@@ -463,6 +496,7 @@ $$E(r_i) - r_f = \underbrace{\frac{Cov(r_i, r_m)}{\text{Var}(r_m)}}_{\beta_i} E(
 - Variable `exchcd` determines listing exchanges, `siccd` lists industry
 
 ```{r}
+# R
 library(RSQLite)
 tidy_finance <- dbConnect(SQLite(), "../data/tidy_finance_r.sqlite", extended_types = TRUE) # Connect to sql
 crsp_monthly <- tbl(tidy_finance, "crsp_monthly") |> collect()
@@ -470,6 +504,8 @@ crsp_monthly <- tbl(tidy_finance, "crsp_monthly") |> collect()
 
 ```{python}
 #| eval: false
+
+# Python
 import pandas as pd
 import sqlite3
 
@@ -777,3 +813,136 @@ behavior (behavioral finance)?
 - The CAPM assumes that the average investor cares only about the performance of the investment portfolio but wealth could emerge from other sources and higher-order risks could play a role
 - The CAPM assumes a static one-period model. In Merton's (1973) ICAPM, the demand for risky assets is attributed not only to the mean-variance component, as in the CAPM, but also to hedging against unfavorable shifts in the investment opportunity set
 - Empirically, the poor performance of the single factor CAPM motivated a search for multifactor models
+
+
+## Example: Dow Jones 30 constituents
+```{r}
+#| echo: False
+
+library(tidyverse)
+library(tidyquant)
+library(scales)
+
+symbols <- tq_index("DOW") |> 
+  filter(company != "US DOLLAR")
+
+index_prices <- tq_get(symbols,
+                       get = "stock.prices",
+                       from = "2000-01-01",
+                       to = "2022-12-31"
+)
+
+all_returns <- index_prices |>
+  group_by(symbol) |>
+  mutate(ret = adjusted / lag(adjusted) - 1) |>
+  select(symbol, date, ret) |>
+  drop_na(ret)
+
+index_prices <- index_prices |>
+  group_by(symbol) |>
+  mutate(n = n()) |>
+  ungroup() |>
+  filter(n == max(n)) |>
+  select(-n)
+returns <- index_prices |>
+  mutate(month = floor_date(date, "month")) |>
+  group_by(symbol, month) |>
+  summarize(price = last(adjusted), .groups = "drop_last") |>
+  mutate(ret = price / lag(price) - 1) |>
+  drop_na(ret) |>
+  select(-price)
+
+returns_matrix <- returns |>
+  pivot_wider(
+    names_from = symbol,
+    values_from = ret
+  ) |>
+  select(-month)
+
+sigma <- cov(returns_matrix)
+mu <- colMeans(returns_matrix)
+
+N <- ncol(returns_matrix)
+iota <- rep(1, N)
+sigma_inv <- solve(sigma)
+mvp_weights <- sigma_inv %*% iota
+mvp_weights <- mvp_weights / sum(mvp_weights)
+
+benchmark_multiple <- 3
+mu_bar <- benchmark_multiple * t(mvp_weights) %*% mu
+C <- as.numeric(t(iota) %*% sigma_inv %*% iota)
+D <- as.numeric(t(iota) %*% sigma_inv %*% mu)
+E <- as.numeric(t(mu) %*% sigma_inv %*% mu)
+lambda_tilde <- as.numeric(2 * (mu_bar - D / C) / (E - D^2 / C))
+efp_weights <- mvp_weights +
+  lambda_tilde / 2 * (sigma_inv %*% mu - D * mvp_weights)
+
+length_year <- 12
+a <- seq(from = -0.4, to = 1.9, by = 0.01)
+res <- tibble(
+  a = a,
+  mu = NA,
+  sd = NA
+)
+
+for (i in seq_along(a)) {
+  w <- (1 - a[i]) * mvp_weights + (a[i]) * efp_weights
+  res$mu[i] <- length_year * t(w) %*% mu   
+  res$sd[i] <- sqrt(length_year) * sqrt(t(w) %*% sigma %*% w)
+}
+
+tibble(
+  mu = length_year * mu,       
+  sd = sqrt(length_year) * sqrt(diag(sigma))
+) |>
+  ggplot(aes(x = sd, y = mu)) +
+  geom_point(size = 1) +
+  geom_point(
+    data = res |> filter(a %in% c(0)),
+    size = 4, alpha = 0
+  ) +
+  labs(
+    x = "Annualized standard deviation",
+    y = "Annualized expected return",
+    title = "Returns of Dow Jones 30 constituents"
+  )  +
+  scale_x_continuous(labels = percent) +
+  scale_y_continuous(labels = percent) 
+
+```
+
+## Example: Dow Jones 30 constituents
+
+```{r}
+#| echo: False
+
+tibble(
+  mu = length_year * mu,       
+  sd = sqrt(length_year) * sqrt(diag(sigma))
+) |>
+  ggplot(aes(x = sd, y = mu)) +
+  geom_point(size = 1) +
+  geom_point(
+    data = res |> filter(a %in% c(0)),
+    size = 4) +
+  labs(
+    x = "Annualized standard deviation",
+    y = "Annualized expected return",
+    title = "Returns of Dow Jones 30 constituents"
+  )  +
+  scale_x_continuous(labels = percent) +
+  scale_y_continuous(labels = percent) +
+  annotate(
+    geom = "curve", 
+    xend = res |> filter(a %in% c(0))|>pull(sd), 
+    yend = res |> filter(a %in% c(0))|>pull(mu), 
+    x = res |> filter(a %in% c(0))|>pull(sd), 
+    y = 0.2,
+    curvature = 0.2,
+    arrow = arrow(length = unit(4, "mm"))
+  ) +
+  annotate(geom = "text", x = res |> filter(a %in% c(0))|>pull(sd), y = 0.2, label = "frac(~Sigma^{-1}~iota,~iota^T ~Sigma^{-1}~iota)", parse = TRUE, hjust = "left")
+
+
+```
+
