@@ -152,7 +152,7 @@ $$E_t\left(r_{i, t+1}\right) = g^\star(x_{i, t}) \overset{??}{=} \beta'x_{i,t} $
 ### Biased estimators? 
 
 - *Shrinkage* methods: the variance of the OLS estimator can be high as OLS coefficients are unregulated
-- If judged by Mean Squared Error (MSE), biased estimators could be more attractive if they produce substantially smaller variance than OLS
+- If judged by Mean Squared Error (MSPE), biased estimators could be more attractive if they produce substantially smaller variance than OLS
 
 ## Shortcomings of OLS
 
@@ -181,14 +181,14 @@ where $\varepsilon$ is the vector of residuals and $\sigma_\varepsilon^2$ is the
 $$y = f(x) + \varepsilon, \quad \varepsilon \sim (0, \sigma_\varepsilon^2)$$
 - $\hat\beta^\text{ols}$ has a host of well-known properties (Gauss-Markov)
 - But: Can we choose $\hat f(x)$ to fit future observations well?
-- MSE depends on the model as follows: $$\begin{aligned}
+- MSPE depends on the model as follows: $$\begin{aligned}
 E(\hat{\varepsilon}^2)&=E((y-\hat{f}(\textbf{x}))^2)=E((f(\textbf{x})+\varepsilon-\hat{f}(\textbf{x}))^2)\\
 &= \underbrace{E((f(\textbf{x})-\hat{f}(\textbf{x}))^2)}_{\text{total quadratic error}}+\underbrace{E(\varepsilon^2)}_{\text{irreducible error}} \\
 &= E\left(\hat{f}(\textbf{x})^2\right)+E\left(f(\textbf{x})^2\right)-2E\left(f(\textbf{x})\hat{f}(\textbf{x})\right)+\sigma_\varepsilon^2\\
 &=E\left(\hat{f}(\textbf{x})^2\right)+f(\textbf{x})^2-2f(\textbf{x})E\left(\hat{f}(\textbf{x})\right)+\sigma_\varepsilon^2\\
 &=\underbrace{\text{Var}\left(\hat{f}(\textbf{x})\right)}_{\text{variance of model}}+ \underbrace{E\left((f(\textbf{x})-\hat{f}(\textbf{x}))\right)^2}_{\text{squared bias}} +\sigma_\varepsilon^2 
 \end{aligned}$$
-- A biased estimator with small variance may have a lower MSE than an unbiased estimator
+- A biased estimator with small variance may have a lower MSPE than an unbiased estimator
 
 ## Over-fitting example 
 
@@ -286,7 +286,7 @@ sigma_e <- 1
 values <- tibble(lambda = seq(from = 0, to = 5, by = 0.1)) |> 
   mutate(bias = (lambda / (1+lambda))^2,
          variance = sigma_e^2 * (D + lambda)^-2 * D,
-         mse = bias + variance) |> 
+         mspe = bias + variance) |> 
   pivot_longer(-lambda, 
                names_to = "variable", 
                values_to = "value") 
@@ -296,7 +296,7 @@ ggplot(values, aes(x = lambda,
                    color = variable)) +
   geom_point() +
   geom_vline(xintercept = values |> 
-               filter(variable == "mse") |> 
+               filter(variable == "mspe") |> 
                filter(value == min(value)) |>
                pull(lambda), 
              linetype = "dotted") +
@@ -305,7 +305,7 @@ ggplot(values, aes(x = lambda,
        color = NULL,
        title = "Bias-Variance Trade-off") +
   guides(x = "none", y = "none") +
-  scale_color_discrete(labels = c("Bias (Squared)", "MSE", "Variance"))
+  scale_color_discrete(labels = c("Bias (Squared)", "MSPE", "Variance"))
 
 ```
 
@@ -473,7 +473,7 @@ $$
 ## Validation sample
 
 - To choose from the set of hyperparameters, we further divide our training sample without using our test sample!
-- For each set of algorithm parameters being considered, we want an estimate of the MSPE, and then we will choose the parameters with the smallest MSE
+- For each set of algorithm parameters being considered, we want an estimate of the MSPE, and then we will choose the parameters with the smallest MSPE
 
 1. Prespecify a grid of hyperparameters
 2. Obtain predictors $\hat{y}_i(\lambda)$ to denote the predictors for the used parameters $\lambda$
@@ -496,7 +496,7 @@ $$
 
 ## K-fold cross-validation
 
-- repeat the calculation above for each of these sets $b=1,\dots,K$ and obtain $\hat{\mbox{MSE}}_1(\lambda),\dots, \hat{\mbox{MSPE}}_K(\lambda)$ and compute the average
+- repeat the calculation above for each of these sets $b=1,\dots,K$ and obtain $\hat{\mbox{MSPE}}_1(\lambda),\dots, \hat{\mbox{MSPE}}_K(\lambda)$ and compute the average
 $$
 \hat{\mbox{MSPE}}(\lambda) = \frac{1}{K} \sum_{b=1}^K \hat{\mbox{MSPE}}_b(\lambda)
 $$
@@ -518,13 +518,13 @@ $$
 $$\min \sum\limits_{i=1}^nL\left(f(x_i),y_i\right)\text{ over } f\in\mathcal{F}\text{ subject to } R(f) \leq c$$
 2. estimate the optimal level of complexity $c$ using empirical tuning (cross-validation)
 
-## Prepare the data
+## ML workflows in R and Python
 
 - R and Python provide unparalleled workflows for ML: `tidymodels` and `scikit-learn`
 
 ```{mermaid}
 %%| echo: False
-%%| width: 4
+%%| fig-width: 3
 
 flowchart LR
   A(Recipe) --> C(Model)
@@ -533,12 +533,12 @@ flowchart LR
   D --> E(Selection)
 ```
 
-- Preprocessing steps (`recipe`)
-- Model definition with declaration of tuning parameters
+- Preprocessing steps (`recipe` and `transformers`)
+- Model definition with declaration of tuning parameters (`workflow` and `pipeline`)
 - Data split handling 
 - Tuning and model selection
 
-## Tidymodels walk-through
+## Tidymodels recipes
 
 ```{r}
 library(tidymodels) # For ML applications
@@ -561,6 +561,24 @@ rec <- recipe(ret_excess ~ ., data = training(split)) |>
   step_interact(terms = ~ contains("factor"):contains("macro")) |> # interaction terms
   step_normalize(all_predictors()) |> # scale to unit standard deviation
   step_center(ret_excess , skip = TRUE) # demean variables
+```
+
+## Scikit-learn recipes
+
+- Skicit-learn offers a similar range of preprocessing (`recipe`) steps
+- Interaction terms have to be built manually
+
+```{python}
+#| eval: false
+preprocessor = ColumnTransformer(
+  transformers=[
+    ("scale", StandardScaler(), 
+    [col for col in data.columns 
+      if col not in ["ret_excess", "month", "industry"]])
+  ],
+  remainder="drop",
+  verbose_feature_names_out=False
+)
 ```
 
 ## Build a model with tidymodels
@@ -590,7 +608,35 @@ lm_fit <- workflow() |>
 lm_fit |> fit(data = training(split))
 ```
 
-## Tune a model
+## Build a model with Scikit-learn
+
+- Similar to `tidymodels`: Define model and embed in `pipeline`
+- `Fit` method to compute parameter estimates
+
+```{python}
+#| eval: false
+lm_model = ElasticNet(
+  alpha=0.007,
+  l1_ratio=1, 
+  max_iter=5000, 
+  fit_intercept=False
+)  
+
+lm_pipeline = Pipeline([
+  ("preprocessor", preprocessor),
+  ("regressor", lm_model)
+])
+
+
+# Easy to fit a model
+lm_fit = lm_pipeline.fit(
+  data_manufacturing_training, 
+  data_manufacturing_training.get("ret_excess")
+)
+
+```
+
+## Tune a model with tidymodels
   
 - Recall:  Specify a grid of hyperparameters, obtain predictors $\hat{y}_i(\lambda)$ to denote the predictors for the used parameters $\lambda$ and compute $\mbox{MSPE}(\lambda)$ 
 
@@ -622,7 +668,7 @@ lm_tune <- lm_fit |>
   )
 ```
 
-## Selecting the best model 
+## Select the best model 
 
 ```{r}
 autoplot(lm_tune) +
@@ -631,51 +677,7 @@ autoplot(lm_tune) +
   labs(title = "Cross-validated average squared prediction errors")
 ```
 
-## Scikit-learn recipes
-
-- Skicit-learn offers a similar range of preprocessing (`recipe`) steps
-- Interaction terms have to be built manually
-
-```{python}
-#| eval: false
-preprocessor = ColumnTransformer(
-  transformers=[
-    ("scale", StandardScaler(), 
-    [col for col in data.columns 
-      if col not in ["ret_excess", "month", "industry"]])
-  ],
-  remainder="drop",
-  verbose_feature_names_out=False
-)
-```
-
-## Scikit-learn model building
-
-```{python}
-#| eval: false
-lm_model = ElasticNet(
-  alpha=0.007,
-  l1_ratio=1, 
-  max_iter=5000, 
-  fit_intercept=False
-)  
-
-lm_pipeline = Pipeline([
-  ("preprocessor", preprocessor),
-  ("regressor", lm_model)
-])
-
-
-# Easy to fit a model
-lm_fit = lm_pipeline.fit(
-  data_manufacturing_training, 
-  data_manufacturing_training.get("ret_excess")
-)
-
-```
-
-
-## Scikit-learn model tuning
+## Tune a model with Scikit-learn
 
 ```{python}
 #| eval: false
@@ -741,15 +743,15 @@ $$
 
 ## Intuition with R
 - Also here: In the **exercises**, you will implement a regression tree on your own
-```{r, size = "tiny", out.width='50%', fig.align='center'}
+```{r, out.width='70%', fig.align='center'}
 library(rpart)
 model <- rpart(
   ret_excess ~ ., 
   data = training(split) |> select(-month), 
   control = rpart.control(maxdepth = 2))
 
-plot(model, compress = TRUE)
-text(model, cex = 0.7, fancy = FALSE, all = FALSE)
+plot(model)
+text(model, cex = 0.7)
 ```
 
 ## Random forests and Bagging
@@ -860,7 +862,7 @@ tab |> pivot_longer(-val) |>
 
 - How to train the model?
 - For given weights $w$, we run the neural network and receive output $\tilde y$ as a function of the input values $X$ (as well as the network architecture and the current weights)
-- Compute the loss $\mathcal{L}\left(\tilde y, y\right)$, e.g. MSE
+- Compute the loss $\mathcal{L}\left(\tilde y, y\right)$, e.g. MSPE
 - The aim is to choose $w$ to minimize the Loss
 - $\Rightarrow$ Differentiate with respect to $w$ and move in the direction of the negative gradient (step size is a hyperparameter, often called learning rate) 
 
@@ -869,23 +871,25 @@ $$\Delta \vec{w} = r\cdot\left(\frac{\partial P}{\partial w_0},\frac{\partial P}
 
 - For a thorough discussion of backpropagation, consider watching [this lecture]()
 
-## Deep neural networks in R
+## Deep neural networks in R and Python
 
-- `keras` provides a helpful interface to create and train a deep neural network
+- `torch` provides a helpful interface to create and train a deep neural network
 - The example below generates a sequential model with 21 input units, two hidden layers with 64 and 16 neurons, respectively, and ReLu activation functions
 - Dropout and $L_2$ regularization is easy to include
 - Output is a single neuron with linear (default) activation function which can be used for predictions
 
 ```{r, eval = FALSE}
-library(keras)
-model <- keras_model_sequential() |> 
-  layer_flatten(input_shape = 21) |> 
-  layer_dense(units = 64, activation = "relu") |>
-  # layer_dropout(0.6) |>
-  layer_dense(units = 16, 
-              activation = "relu", 
-              kernel_regularizer = regularizer_l2(l = 0.001)) |>
-  layer_dense(1)
+library(torch)
+library(brulee)
+
+deep_nnet_model <- mlp(
+  epochs = 500,
+  dropout = 0.6,
+  hidden_units = c(64, 16),
+  activation = "sigmoid"
+) |>
+  set_mode("regression") |>
+  set_engine("brulee", verbose = FALSE)
 ```
 
 ## Predict returns with neural networks 
