@@ -766,12 +766,13 @@ text(model, cex = 0.7)
 - Also: randomly selecting features to be included in the building of each tree
 - For each observation in the test set, form a prediction $\hat{y} = \frac{1}{B}\sum\limits_{i=1}^B\hat{y}_{T_i}$
 
-## Hyperparameter tuning for regression trees
+## Hyperparameter tuning for random forests (R)
 ```{r}
+#| eval: false
 # install.packages("ranger") # Regression trees in R
 rf_model <- rand_forest(
-  trees = 50,
-  min_n = 20
+  trees = 50, # tune()
+  min_n = 20  # tune()
 ) |>
   set_engine("ranger") |>
   set_mode("regression")
@@ -780,10 +781,31 @@ rf_model <- rand_forest(
 - Fitting the model follows the same convention as for the penalized regressions before
 
 ```{r}
+#| eval: false
 rf_fit <- workflow() |>
   add_recipe(rec) |>
   add_model(rf_model) |>
   fit(data = training(split))
+```
+
+## Hyperparameter tuning for random forests (Python)
+```{python}
+#| eval: false
+rf_model = RandomForestRegressor(
+  n_estimators=50, 
+  min_samples_leaf=20, 
+  random_state=random_state
+)
+```
+
+- Fitting the model follows the same convention as for the penalized regressions before
+
+```{python}
+#| eval: false
+rf_pipeline = Pipeline([
+  ("preprocessor", preprocessor),
+  ("regressor", rf_model)
+])
 ```
 
 ## Neural networks
@@ -794,7 +816,7 @@ rf_fit <- workflow() |>
 2. Neurons receive inputs from many adjacent neurons upstream and can transmit signals to many adjacent signals downstream (cumulative inputs)
 3. Each neuron has its threshold for activation (synaptic weight)
 
-![]("figures/neural_network_one_unit.png"){width=70%}
+![]("figures/neural_network_one_unit.png"){width=70% fig-align="center"}
 
 ## Feed-forward neural networks
 
@@ -807,12 +829,12 @@ hidden layers into an outcome prediction
 - number of units (neurons) in the input layer is equal to the dimension of the predictors
 - output layer usually consists of one neuron (for regression) or multiple neurons for classification
 
-## Neural networks: Intuition
+## Neural networks: Example
 
-![]("figures/neural_network.jpg"){width=50%}
+![]("figures/neural_network.jpg"){width=50% fig-align="center"}
 
 - 4 input units
-- In this example, there is one hidden layer with five neurons
+- One hidden layer with five neurons
 - Each neuron receives information from each input layer
 - The results from each neuron, $x_k^1 = f\left(\theta_k ^0 + \sum\limits_{j=1}^4 z_j\theta_{k,j}^0\right)$ are finally aggregated into one output forecast
 $$\theta_0^1 + \sum\limits_{j=1}^5x_j^1\theta_j^1 $$
@@ -851,12 +873,9 @@ tab |> pivot_longer(-val) |>
 ### Plenty of decisions 
 - Depth (number of hidden layers), Activation function, number of neurons, connections of units (dense or sparse), regularization to avoid overfitting, learning rate
 - There is no clear theoretical guidance on these choices but rather a large number of rules of thumbs 
-- Despite the computational challenges, implementation in R is not tedious at all: We can use the [API to tensorflow](https://tensorflow.rstudio.com/installation/)
+- Despite the computational challenges, implementation in R and Python is not tedious at all
 - Take a look [at this impressive visualization](https://playground.tensorflow.org/)
-- Due to the data transformation process that DNNs perform, they are susceptible to the individual scale of the feature values: Standardize the feature sets!
-
-### Exercise
-- Follow the `Tensorflow` installation steps and study some of [their examples](https://tensorflow.rstudio.com/tutorials/)
+- Due to the data transformation process that Neural Networks perform, they are susceptible to the individual scale of the feature values: Standardize the feature sets!
 
 ## Backpropagation
 
@@ -871,7 +890,7 @@ $$\Delta \vec{w} = r\cdot\left(\frac{\partial P}{\partial w_0},\frac{\partial P}
 
 - For a thorough discussion of backpropagation, consider watching [this lecture]()
 
-## Deep neural networks in R and Python
+## Deep neural networks in R
 
 - `torch` provides a helpful interface to create and train a deep neural network
 - The example below generates a sequential model with 21 input units, two hidden layers with 64 and 16 neurons, respectively, and ReLu activation functions
@@ -892,20 +911,25 @@ deep_nnet_model <- mlp(
   set_engine("brulee", verbose = FALSE)
 ```
 
-## Predict returns with neural networks 
 
-- All that is needed is to compile and then fit the model
+## Deep neural networks in Python
 
-```{r, eval = FALSE}
-model |> compile(loss = "mse",
-                  optimizer = optimizer_rmsprop(),
-                  metrics = "mean_absolute_error")
-    
-model |> fit(x = training(split) |> select(-month, -ret), 
-              y = training(split) |> pull(ret),
-              validation_data = list(testing(split) |> select(-month, -ret), 
-                                     testing(split) |> pull(ret)),
-    epochs = 600)
+```{python}
+#| eval: false
+
+deepnnet_model = MLPRegressor(
+  hidden_layer_sizes=(64, 16),
+  activation="sigmoid", 
+  solver="lbfgs",
+  max_iter=500, 
+  random_state=42 # seed
+)
+                              
+deepnnet_pipeline = Pipeline([
+  ("preprocessor", preprocessor),
+  ("regressor", deepnnet_model)
+])
+
 ```
 
 ## Empirical Asset Pricing via Machine Learning
