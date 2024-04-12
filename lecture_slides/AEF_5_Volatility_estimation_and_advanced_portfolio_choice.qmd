@@ -64,14 +64,12 @@ theme_set(theme_bw() + theme(legend_position="bottom"))
 
 # Volatility estimation
 
-## Scope - what can we say about $\Sigma$?
+## What can we say about $\Sigma_t$?
 
-![]("figures/storm.jpg"){width=50% fig-align="center"}
+![]("figures/storm.jpg"){width=80% fig-align="center"}
 
 
 ## Definition and Relevance
-
-### Definitions
 
 - Any time series can be decomposed into a predictable part an unpredictable part 
 $$r_t = E\left(r_t|\mathcal{F}_{t-1}\right) + \varepsilon_t$$
@@ -81,8 +79,8 @@ $$\sigma_t^2 = \text{Var}\left(r_t|\mathcal{F}_{t-1}\right) = E\left(\varepsilon
 
 ### Recap
 
+- $\hat\sigma_t^2$ is a crucial component for *option pricing* - recall Black-Scholes
 - $\hat\Sigma_t$ is relevant for the *portfolio choice problem*
-- $\hat\sigma_t^2$ is also a crucial component for *option pricing* - recall Black-Scholes
 - Obvious problem: $\sigma_t^2$ is not observable
 
 ## What do we know about $\sigma_t^2$?
@@ -152,7 +150,7 @@ Building a volatility model for an asset return series consists of four steps:
 
 ## The ARCH model (Engle, 1982)
 
-- Describes the dependence of $\varepsilon_t$ by an ARCH(m) model 
+- An ARCH(m) model describes the dependence of $\varepsilon_t$ by
 $$\varepsilon_t = \sigma_t z_t \qquad \sigma_t^2 = \alpha_0 + \alpha_1 \varepsilon_{t-1}^2 + \ldots + \alpha_m \varepsilon_{t-m}^2$$
 - where $z_t$ is a sequence of independent and identically distributed (iid) random variables with mean zero and unit variance 
 - (common assumption for MLE: Gaussian or t-distributed $z_t$)
@@ -227,10 +225,27 @@ tibble(returns, sigma = sigma(model.fit)) |> ggplot(aes(x = date, y = sigma)) + 
 
 ## Small example: Value-at-risk
 
-- We define the VaR (Value-at-risk) of a financial position over a given time horizon $l$ with tail
-probability $p$ as $$p = \text{Pr}\left(L(l) \geq VaR\right) = 1 - \text{Pr}\left(L(l) \leq VaR\right)$$
+- The VaR (Value-at-risk) of a financial position over a given time horizon $l$ with tail
+probability $p$ is defined by $$p = \text{Pr}\left(L(l) \geq VaR\right) = 1 - \text{Pr}\left(L(l) \leq VaR\right)$$
 where $L$ is a loss function, e.g. in terms of USD
-- probability that the position holder would encounter a loss greater than or equal to VaR over the time horizon $l$ is $p$
+- Intuition: the probability that the position holder would encounter a loss greater than or equal to VaR over the time horizon $l$ is at most $p$
+
+```{r}
+#| echo: false
+library(tidyverse)
+data = tibble(loss = seq(from = -10, to = 10, by  = 0.1),
+       cdf = pnorm(loss, mean = 1, sd = 4))
+data |>
+  ggplot(aes(x = loss, 
+             y = cdf)) +
+  geom_line() +
+  geom_ribbon(data = data |> filter(loss < 2 - 4 * 1.96),
+              aes(ymin = 0, ymax = cdf), fill = "lightblue", alpha = 0.5) +
+  labs(title = "CDF of Gaussian Loss",
+       x = "Loss",
+       y = NULL) +
+  geom_vline(aes(xintercept = 2 - 4 * 1.96),linetype = "dotted")
+```
 
 ## Small example: Value-at-risk
 ```{r}
@@ -378,9 +393,22 @@ sigma <- shrinkage * prior + (1 - shrinkage) * sample
 
 - `r round(rBar, 3)` is the average sample correlation $\bar{r} = \left(\frac{2}{(N-1)N}\sum\limits_{i=1}^{N-1}\sum\limits_{j=i+1}^N \frac{\hat\Sigma_{ij}}{\sqrt{\hat\Sigma_{ii}}\hat\Sigma_{jj}}\right)$
 - Define the sample constant correlation matrix $F$ by means of the sample variances and the average sample correlation: $f_{ii} = \hat\Sigma_{ii} \text{ and } f_{ij} = \bar{r}\sqrt{\hat\Sigma_{ii}\hat\Sigma_{jj}}$
-```{r, echo = FALSE}
-cbind(sample, cor(x), prior) |> 
+```{r}
+#| echo: false
+#| tbl-subcap: 
+#|   - "Sample Cov"
+#|   - "Sample Cor"
+#|   - "Shrinkage"
+#| layout-ncol: 3
+sample |> 
   knitr::kable(digits = 3) 
+
+cor(x) |> 
+  knitr::kable(digits = 3) 
+
+prior |> 
+  knitr::kable(digits = 3) 
+
 ```
 
 ## Dynamic multivariate models
